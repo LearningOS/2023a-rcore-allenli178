@@ -14,8 +14,10 @@ pub struct TrapContext {
     /// Token of kernel address space
     pub kernel_satp: usize,
     /// Kernel stack pointer of the current application
+    /// 当前应用在内核地址空间中的内核栈栈顶的虚拟地址
     pub kernel_sp: usize,
     /// Virtual address of trap handler entry point in kernel
+    /// 内核中 trap handler 入口点的虚拟地址
     pub trap_handler: usize,
 }
 

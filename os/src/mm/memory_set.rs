@@ -278,6 +278,7 @@ impl MapArea {
         map_type: MapType,
         map_perm: MapPermission,
     ) -> Self {
+        // align down start_va and align up end_va
         let start_vpn: VirtPageNum = start_va.floor();
         let end_vpn: VirtPageNum = end_va.ceil();
         Self {

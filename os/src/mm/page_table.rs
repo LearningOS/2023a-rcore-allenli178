@@ -30,13 +30,13 @@ pub struct PageTableEntry {
 impl PageTableEntry {
     /// Create a new page table entry
     pub fn new(ppn: PhysPageNum, flags: PTEFlags) -> Self {
-        PageTableEntry {
+        Self {
             bits: ppn.0 << 10 | flags.bits as usize,
         }
     }
     /// Create an empty page table entry
     pub fn empty() -> Self {
-        PageTableEntry { bits: 0 }
+        Self { bits: 0 }
     }
     /// Get the physical page number from the page table entry
     pub fn ppn(&self) -> PhysPageNum {
@@ -47,18 +47,22 @@ impl PageTableEntry {
         PTEFlags::from_bits(self.bits as u8).unwrap()
     }
     /// The page pointered by page table entry is valid?
+    /// When V is 1, the page is valid.
     pub fn is_valid(&self) -> bool {
         (self.flags() & PTEFlags::V) != PTEFlags::empty()
     }
     /// The page pointered by page table entry is readable?
+    /// When R is 1,the page is readable.
     pub fn readable(&self) -> bool {
         (self.flags() & PTEFlags::R) != PTEFlags::empty()
     }
     /// The page pointered by page table entry is writable?
+    /// When W is 1,the page is writable.
     pub fn writable(&self) -> bool {
         (self.flags() & PTEFlags::W) != PTEFlags::empty()
     }
     /// The page pointered by page table entry is executable?
+    /// When X is 1,the page is executable.
     pub fn executable(&self) -> bool {
         (self.flags() & PTEFlags::X) != PTEFlags::empty()
     }
@@ -75,7 +79,7 @@ impl PageTable {
     /// Create a new page table
     pub fn new() -> Self {
         let frame = frame_alloc().unwrap();
-        PageTable {
+        Self {
             root_ppn: frame.ppn,
             frames: vec![frame],
         }

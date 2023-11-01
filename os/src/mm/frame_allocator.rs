@@ -54,7 +54,7 @@ impl StackFrameAllocator {
     pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
         self.current = l.0;
         self.end = r.0;
-        // trace!("last {} Physical Frames.", self.end - self.current);
+        trace!("last {} Physical Frames.", self.end - self.current);
     }
 }
 impl FrameAllocator for StackFrameAllocator {
@@ -77,7 +77,7 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn dealloc(&mut self, ppn: PhysPageNum) {
         let ppn = ppn.0;
-        // validity check
+        // validity pnn has been allocated
         if ppn >= self.current || self.recycled.iter().any(|&v| v == ppn) {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
         }

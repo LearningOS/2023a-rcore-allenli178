@@ -1,7 +1,10 @@
 //! Implementation of physical and virtual address and page number.
 use super::PageTableEntry;
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
-use core::fmt::{self, Debug, Formatter};
+use core::{
+    fmt::{self, Debug, Formatter},
+    ops::Deref,
+};
 /// physical address
 const PA_WIDTH_SV39: usize = 56;
 const VA_WIDTH_SV39: usize = 39;
@@ -28,9 +31,23 @@ impl Debug for VirtAddr {
         f.write_fmt(format_args!("VA:{:#x}", self.0))
     }
 }
+impl Deref for VirtAddr {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl Debug for VirtPageNum {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_fmt(format_args!("VPN:{:#x}", self.0))
+    }
+}
+impl Deref for VirtPageNum {
+    type Target = usize;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 impl Debug for PhysAddr {
