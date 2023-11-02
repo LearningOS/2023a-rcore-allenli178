@@ -39,7 +39,6 @@ pub struct MemorySet {
     page_table: PageTable,
     /// 一系列有关联但不一定连续的逻辑段
     areas: Vec<MapArea>,
-    mmap_frames: BTreeMap<VirtPageNum, FrameTracker>,
 }
 
 impl MemorySet {
@@ -48,7 +47,6 @@ impl MemorySet {
         Self {
             page_table: PageTable::new(),
             areas: Vec::new(),
-            mmap_frames: BTreeMap::new(),
         }
     }
     /// Get the page table token
@@ -267,57 +265,51 @@ impl MemorySet {
         }
     }
     /// mmap
-    pub fn mmap(&mut self, start_vpn: VirtPageNum, end_vpn: VirtPageNum, port: usize) -> isize {
-        let mut flags = PTEFlags::empty();
-        let mut vpn = start_vpn;
-        {
-            if port & 0b0000_0001 != 0 {
-                flags |= PTEFlags::R;
-            }
-            if port & 0b0000_0010 != 0 {
-                flags |= PTEFlags::W;
-            }
-            if port & 0b0000_0100 != 0 {
-                flags |= PTEFlags::X;
-            }
-            flags |= PTEFlags::U;
-            flags |= PTEFlags::V;
-        }
-        while vpn != end_vpn {
-            if let Some(pte) = self.page_table.translate(vpn) {
-                debug!("find vpn {:?} pte flag = {:?}", vpn, pte.flags());
+    pub fn mmap(&mut self, start: usize, len: usize, port: usize) -> isize {
+        let vpn_start = VirtAddr::from(start).floor();
+        let vpn_end = VirtAddr::from(start + len).ceil();
+        let vpn_range = VPNRange::new(vpn_start, vpn_end);
+        for vpn in vpn_range {
+            if let Some(pte) = self.page_table.find_pte(vpn) {
                 if pte.is_valid() {
-                    debug!("map on already mapped vpn {:?}", vpn);
+                    debug!("mmap on mapped vpn");
                     return -1;
                 }
             }
-            if let Some(frame) = frame_alloc() {
-                let ppn = frame.ppn;
-                debug!(" map vpn {:?} and ppn {:?} flag {:?}", vpn, ppn, flags);
-                self.page_table.map(vpn, ppn, flags);
-                self.mmap_frames.insert(vpn, frame);
-            } else {
-                return -1;
-            }
-            vpn.step();
         }
+        let mut permission = MapPermission::U;
+        {
+            if port & 0b0000_0001 != 0 {
+                permission |= MapPermission::R;
+            }
+            if port & 0b0000_0010 != 0 {
+                permission |= MapPermission::W;
+            }
+            if port & 0b0000_0100 != 0 {
+                permission |= MapPermission::X;
+            }
+        }
+        self.insert_framed_area(start.into(), (start + len).into(), permission);
         0
     }
     /// mmunmap
-    pub fn munmap(&mut self, start_vpn: VirtPageNum, end_vpn: VirtPageNum) -> isize {
-        let mut vpn = start_vpn;
-        while vpn != end_vpn {
-            if let Some(pte) = self.page_table.translate(vpn) {
-                if !pte.is_valid() {
-                    debug!("unmap on no map vpn");
-                    return -1;
-                }
-            } else {
+    pub fn munmap(&mut self, start: usize, len: usize) -> isize {
+        let vpn_start = VirtAddr::from(start).floor();
+        let vpn_end = VirtAddr::from(start + len).ceil();
+        let vpn_range = VPNRange::new(vpn_start, vpn_end);
+        for vpn in vpn_range {
+            let pte = self.page_table.find_pte(vpn);
+            if pte.is_none() || !pte.unwrap().is_valid() {
+                debug!("munmap on unmapped vpn");
                 return -1;
             }
-            self.page_table.unmap(vpn);
-            self.mmap_frames.remove(&vpn);
-            vpn.step();
+        }
+        for vpn in vpn_range {
+            for area in &mut self.areas {
+                if vpn >= area.vpn_range.get_start() && vpn <= area.vpn_range.get_end() {
+                    area.unmap_one(&mut self.page_table, vpn);
+                }
+            }
         }
         0
     }
@@ -325,10 +317,10 @@ impl MemorySet {
 
 /// map area structure, controls a contiguous piece of virtual memory
 pub struct MapArea {
-    vpn_range: VPNRange,    // 一段虚拟页号的连续空间
-    data_frames: BTreeMap<VirtPageNum, FrameTracker>,   // vpn <--> ppn 映射关系
-    map_type: MapType,  // 映射类型 
-    map_perm: MapPermission,    // 可读/可写/可执行属性
+    vpn_range: VPNRange,                              // 一段虚拟页号的连续空间
+    data_frames: BTreeMap<VirtPageNum, FrameTracker>, // vpn <--> ppn 映射关系
+    map_type: MapType,                                // 映射类型
+    map_perm: MapPermission,                          // 可读/可写/可执行属性
 }
 
 impl MapArea {

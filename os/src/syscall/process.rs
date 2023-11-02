@@ -49,7 +49,7 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
     let us = get_time_us();
     let pts = translated_ptr(current_user_token(), ts);
     unsafe {
-        *pts = TimeVal {
+        (*pts) = TimeVal {
             sec: us / 1000000,
             usec: us % 1000000,
         };
@@ -64,7 +64,7 @@ pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
     trace!("kernel: sys_task_info NOT IMPLEMENTED YET!");
     let pti = translated_ptr(current_user_token(), ti);
     unsafe {
-        *pti = get_task_info();
+        (*pti) = get_task_info();
     }
     0
 }

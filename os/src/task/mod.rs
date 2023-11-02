@@ -190,7 +190,7 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current]
             .memory_set
-            .mmap(start.into(), (start + len).into(), port)
+            .mmap(start,  len, port)
     }
     /// munmap
     fn munmap(&self, start: usize, len: usize) -> isize {
@@ -198,7 +198,7 @@ impl TaskManager {
         let current = inner.current_task;
         inner.tasks[current]
             .memory_set
-            .munmap(start.into(), (start + len).into())
+            .munmap(start,  len)
     }
 }
 
