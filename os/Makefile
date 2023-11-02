@@ -32,6 +32,8 @@ DISASM ?= -x
 build: env $(KERNEL_BIN)
 
 env:
+	rustup uninstall nightly
+	rustup install nightly
 	(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
 	cargo install cargo-binutils
 	rustup component add rust-src
