@@ -7,6 +7,7 @@ use lazy_static::*;
 
 const USER_STACK_SIZE: usize = 4096 * 2;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
+// max app number
 const MAX_APP_NUM: usize = 16;
 const APP_BASE_ADDRESS: usize = 0x80400000;
 const APP_SIZE_LIMIT: usize = 0x20000;
@@ -54,8 +55,10 @@ struct AppManager {
 }
 
 impl AppManager {
+    #[inline]
     pub fn print_app_info(&self) {
         println!("[kernel] num_app = {}", self.num_app);
+        println!("<<<<<<< app info >>>>>>>");
         for i in 0..self.num_app {
             println!(
                 "[kernel] app_{} [{:#x}, {:#x})",
@@ -64,6 +67,7 @@ impl AppManager {
                 self.app_start[i + 1]
             );
         }
+        println!("<<<<<<< app info end >>>>>>>");
     }
 
     unsafe fn load_app(&self, app_id: usize) {

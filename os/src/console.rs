@@ -6,9 +6,10 @@ struct Stdout;
 
 impl Write for Stdout {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        for c in s.chars() {
-            console_putchar(c as usize);
-        }
+        s.chars().for_each(|c| console_putchar(c as usize));
+        // for c in s.chars() {
+        //     console_putchar(c as usize);
+        // }
         Ok(())
     }
 }

@@ -11,7 +11,7 @@ impl Log for SimpleLogger {
         true
     }
     fn log(&self, record: &Record) {
-        // here to do nothing
+        // here to do nothing if the log level is disabled
         if !self.enabled(record.metadata()) {
             return;
         }
