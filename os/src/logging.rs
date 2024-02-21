@@ -1,15 +1,17 @@
 //! Global logger
 
-use log::{self, Level, LevelFilter, Log, Metadata, Record};
+use log::{Level, LevelFilter, Log, Metadata, Record};
 
 /// a simple logger
 struct SimpleLogger;
 
 impl Log for SimpleLogger {
+    // default to enable all log levels
     fn enabled(&self, _metadata: &Metadata) -> bool {
         true
     }
     fn log(&self, record: &Record) {
+        // here to do nothing
         if !self.enabled(record.metadata()) {
             return;
         }
